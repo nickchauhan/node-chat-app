@@ -40,12 +40,14 @@ io.on("connection", socket => {
   // Listen to the Events
   socket.on("CreateMessage", message => {
     console.log("Message from Client", message);
+    
     // To broadcast to all connected Clients
     // io.emit("newMessage", {
     //   from: message.from,
     //   text: message.text,
     //   createdAt: new Date().getTime()
     // });
+
     // To broadcast on all clients expect this (the one who is emitting event)
     socket.broadcast.emit("newMessage", {
       from: message.from,
