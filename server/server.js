@@ -20,16 +20,38 @@ var io = socketIO(server);
 io.on("connection", socket => {
   console.log("New User Connected");
 
-  //Emit the Event
-  socket.emit("newMessage", {
-    to: "nick",
-    from: "hemi",
-    text: "Hi Nick, Its Hemi."
+  //Emit the Event to the specific connected client
+  //   socket.emit("newMessage", {
+  //     to: "nick",
+  //     from: "hemi",
+  //     text: "Hi Nick, Its Hemi."
+  //   });
+
+  socket.emit("welcome", {
+    message: "Welcome to the Chat App"
+  });
+
+  socket.on("joining", member => {
+    socket.broadcast.emit("joiningMessage", {
+      message: `Hi guys ${member} has joined the chat room`
+    });
   });
 
   // Listen to the Events
-  socket.on("CreateMessage", newMessage => {
-    console.log("Message from Client", newMessage);
+  socket.on("CreateMessage", message => {
+    console.log("Message from Client", message);
+    // To broadcast to all connected Clients
+    // io.emit("newMessage", {
+    //   from: message.from,
+    //   text: message.text,
+    //   createdAt: new Date().getTime()
+    // });
+    // To broadcast on all clients expect this (the one who is emitting event)
+    socket.broadcast.emit("newMessage", {
+      from: message.from,
+      text: message.text,
+      createdAt: new Date().getTime()
+    });
   });
 
   socket.on("disconnect", () => {
