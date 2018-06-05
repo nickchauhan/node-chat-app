@@ -7,6 +7,8 @@ const socketIO = require("socket.io");
 const publicPath = path.join(__dirname, "../public");
 const port = process.env.PORT || 3000;
 
+var { generateMessage, generateLocationMessage } = require("./utills/message");
+
 var app = express();
 app.use(express.static(publicPath));
 
@@ -20,40 +22,36 @@ var io = socketIO(server);
 io.on("connection", socket => {
   console.log("New User Connected");
 
-  //Emit the Event to the specific connected client
-  //   socket.emit("newMessage", {
-  //     to: "nick",
-  //     from: "hemi",
-  //     text: "Hi Nick, Its Hemi."
-  //   });
+  // Emit Event to all connected User
+  socket.emit("newMessage", generateMessage("Admin", "Welcome to Chat App"));
 
-  socket.emit("welcome", {
-    message: "Welcome to the Chat App"
-  });
-
-  socket.on("joining", member => {
-    socket.broadcast.emit("joiningMessage", {
-      message: `Hi guys ${member} has joined the chat room`
-    });
-  });
+  // Emit Other Connected Clients that User has Joined
+  socket.broadcast.emit(
+    "newMessage",
+    generateMessage("Admin", "New User Joined")
+  );
 
   // Listen to the Events
-  socket.on("CreateMessage", message => {
+  socket.on("createMessage", (message, acknowledge) => {
     console.log("Message from Client", message);
-    
+
     // To broadcast to all connected Clients
-    // io.emit("newMessage", {
+    io.emit("newMessage", generateMessage(message.from, message.text));
+    acknowledge("Message Recieved from the Server");
+
+    // To broadcast on all clients expect this (the one who is emitting event)
+    // socket.broadcast.emit("newMessage", {
     //   from: message.from,
     //   text: message.text,
     //   createdAt: new Date().getTime()
     // });
+  });
 
-    // To broadcast on all clients expect this (the one who is emitting event)
-    socket.broadcast.emit("newMessage", {
-      from: message.from,
-      text: message.text,
-      createdAt: new Date().getTime()
-    });
+  socket.on("createLocationMessage", coords => {
+    io.emit(
+      "newLocationMessage",
+      generateLocationMessage("Admin", coords.latitude, coords.longitude)
+    );
   });
 
   socket.on("disconnect", () => {
